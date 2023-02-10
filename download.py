@@ -11,6 +11,7 @@ import time
 import json
 
 split = None
+ext = 'm4a'
 def remove_non_ascii(string):
     return string.encode('ascii', errors='ignore').decode()
 
@@ -39,10 +40,11 @@ def download_audio(video_info, metadata):
         'format': 'bestaudio/best',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'wav'
+            'preferredcodec': ext
         }],
+        'postprocessor_args': ['-ar', '16000'],
         'external_downloader':'ffmpeg',
-        'external_downloader_args':['-ss',st, '-to',dur ,'-loglevel', 'quiet']
+        'external_downloader_args':['-ss',st, '-to',dur, '-loglevel', 'quiet']
     }
     url = f'https://www.youtube.com/watch?v={ids}'
     count = 0
@@ -50,9 +52,9 @@ def download_audio(video_info, metadata):
         shutil.copy('/home/ncl/Downloads/cookies.txt', f'temps/id_{ids}.txt')
         try:
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                file_exist = os.path.isfile(os.path.join('wavs', split, f'id_{ids}.wav'))
+                file_exist = os.path.isfile(os.path.join('wavs', split, f'id_{ids}.{ext}'))
                 info=ydl.extract_info(url, download=not file_exist)
-                filename = f'id_{info["id"]}.wav'   
+                filename = f'id_{info["id"]}.{ext}'   
                 if not file_exist:
                     shutil.move(os.path.join('temps',filename), os.path.join('wavs', split, filename))
                 else:
@@ -74,6 +76,8 @@ def download_audio(video_info, metadata):
 
 # vid_list = pd.read_csv('balanced_train_segments.csv', sep=',', header = 3)
 if __name__ == "__main__":
+    os.system('rm -rf temps')
+    os.makedirs('temps', exist_ok=True)
     indices = open('csvs/class_labels_indices.csv').readlines()[1:]
     labels = list(map(lambda x: x.split(',')[0], indices))
     tags = list(map(lambda x: x.split(',')[1], indices))
@@ -89,7 +93,7 @@ if __name__ == "__main__":
     file = open('csvs/eval_segments.csv', 'r').read()
     rows = file.split('\n')[3:-1]
     eval_metadata = manager.dict()
-    logs = parmap.map(download_audio, rows, eval_metadata, pm_pbar=True, pm_processes=128, pm_chunksize=2)
+    logs = parmap.map(download_audio, rows, eval_metadata, pm_pbar=True, pm_processes=64, pm_chunksize=2)
     logs = [l for l in logs if l is not None]
     open('download_eval_logs.txt','w').write('\n'.join(logs))
     metadata['eval'] = dict(eval_metadata)
@@ -101,7 +105,7 @@ if __name__ == "__main__":
     file = open('csvs/balanced_train_segments.csv', 'r').read()
     rows = file.split('\n')[3:-1]
     balance_metadata = manager.dict()
-    logs = parmap.map(download_audio, rows, balance_metadata, pm_pbar=True, pm_processes=128, pm_chunksize=2)
+    logs = parmap.map(download_audio, rows, balance_metadata, pm_pbar=True, pm_processes=64, pm_chunksize=2)
     logs = [l for l in logs if l is not None]
     open('download_train-bal_logs.txt','w').write('\n'.join(logs))
     metadata['balanced_train'] = dict(balance_metadata)
@@ -113,7 +117,7 @@ if __name__ == "__main__":
     file = open('csvs/unbalanced_train_segments.csv', 'r').read()
     rows = file.split('\n')[3:-1]
     unbalance_metadata = manager.dict()
-    logs = parmap.map(download_audio, rows, unbalance_metadata, pm_pbar=True, pm_processes=128, pm_chunksize=2)
+    logs = parmap.map(download_audio, rows, unbalance_metadata, pm_pbar=True, pm_processes=64, pm_chunksize=2)
     logs = [l for l in logs if l is not None]
     open('download_train-unbal_logs.txt','w').write('\n'.join(logs))
     metadata['unbalanced_train'] = dict(unbalance_metadata)
