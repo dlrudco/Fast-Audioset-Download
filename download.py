@@ -95,7 +95,7 @@ def download_audio(video_info, split):
             'external_downloader_args':['-ss',st, '-to',dur, '-loglevel', 'quiet']
         }
         url = f'https://www.youtube.com/watch?v={ids}'
-        
+        os.makedirs(f'temps/id_{ids}')
         shutil.copy(cookie_path, f'temps/id_{ids}/cookies.txt')
         try:
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
