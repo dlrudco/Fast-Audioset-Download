@@ -109,9 +109,9 @@ def download_audio(video_info, split):
                     pass
                 file_meta = {'id':f'id_{ids}','path': os.path.join(outpath, filename),'title': info['title'], 'url':url, 'tags': categories, 'labels':[tag2name[c] for c in categories]}
                 json.dump(file_meta, open(os.path.join(outpath, jsonname),'w'))
-                shutil.rmtree(f'temps/id_{ids}', onerror=None)
+                os.system(f'rm -rf temps/id_{ids}')
         except Exception as e:
-            shutil.rmtree(f'temps/id_{ids}', onerror=None)
+            os.system(f'rm -rf temps/id_{ids}')
             return f'{url} - ytdl : {log_stream.getvalue()}, system : {str(e)}'
     return None
 
