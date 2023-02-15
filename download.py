@@ -42,7 +42,7 @@ def clear_intermediate_json(split):
              
 def merge_all_json(split):
     files =  glob.glob(f"{os.path.join(os.path.abspath('.'),'wavs', split)}/**/*.json", recursive=True)
-    manager = Manger()
+    manager = Manager()
     def assign(file, meta):
         info = json.load(open(file))
         meta[info['id']] = info
