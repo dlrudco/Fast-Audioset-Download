@@ -30,7 +30,7 @@ def remove_non_ascii(string):
     return string.encode('ascii', errors='ignore').decode()
 
 def clear_intermediate_json(split):
-    files =  glob.glob(f"{os.path.join(os.path.abspath('.'),'wavs', split)}/**/*.json", recursive=True):
+    files =  glob.glob(f"{os.path.join(os.path.abspath('.'),'wavs', split)}/**/*.json", recursive=True)
     p = Pool(num_processes)
     with tqdm(total=len(files),leave=False) as pbar:
         for _ in p.imap_unordered(os.remove, files):
@@ -39,7 +39,7 @@ def clear_intermediate_json(split):
     p.join()
              
 def merge_all_json(split):
-    files =  glob.glob(f"{os.path.join(os.path.abspath('.'),'wavs', split)}/**/*.json", recursive=True):
+    files =  glob.glob(f"{os.path.join(os.path.abspath('.'),'wavs', split)}/**/*.json", recursive=True)
     manager = Manger()
     def assign(file, meta):
         info = json.load(open(file))
