@@ -59,7 +59,7 @@ def merge_all_json(split):
 def download_audio(video_info, split):
     try:
         file_idx, video_info = video_info
-        subfolder_idx = f'{file_idx // 5000:06}'
+        subfolder_idx = f'{file_idx // files_per_folder:06}'
         video_info = video_info.replace(' ', '').split(',')
         to = float((video_info[2]))
         start = float(video_info[1])
