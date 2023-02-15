@@ -1,6 +1,10 @@
 # Fast-Audioset-Download
 Download audioset data super fastly with youtube-dl and Python Multiprocessing. This repo only downloads audio!!
 
+After the download, files will be stored under the 'wavs' folder. 
+
+One can acquire each file's information(including url, stored path(relative), tags, labels interpreted from tags ...) by parsing the metadata json file. 
+
 ## Cookies.txt
 Cookies are required to suppress the auth related warnings(+erros) of youtube-dl([reference](https://github.com/ytdl-org/youtube-dl/issues/31250))
 You can download a cookies.txt by 
