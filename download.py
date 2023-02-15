@@ -15,9 +15,9 @@ from functools import partial
 
 ext = 'm4a'
 sample_rate=16000
-files_per_folder = 50
+files_per_folder = 5000
 num_processes = os.cpu_count()
-cookie_path = '/home/ncl/Downloads/cookies.txt'
+cookie_path = '/path/to/cookies/cookies.txt'
 
 indices = open('csvs/class_labels_indices.csv').readlines()[1:]
 labels = list(map(lambda x: x.split(',')[0], indices))
