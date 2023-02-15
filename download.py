@@ -40,12 +40,13 @@ def clear_intermediate_json(split):
     p.close()
     p.join()
              
+def assign(file, meta):
+    info = json.load(open(file))
+    meta[info['id']] = info
+        
 def merge_all_json(split):
     files =  glob.glob(f"{os.path.join(os.path.abspath('.'),'wavs', split)}/**/*.json", recursive=True)
     manager = Manager()
-    def assign(file, meta):
-        info = json.load(open(file))
-        meta[info['id']] = info
     metadata = manager.dict()
     assign_meta = partial(assign, meta=metadata)
     p = Pool(num_processes)
