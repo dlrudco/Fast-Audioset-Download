@@ -152,7 +152,7 @@ if __name__ == "__main__":
 
     metadata = {}
 
-    splits = ['eval', 'balanced_train', 'unbalanced_train']
+    splits = ['unbalanced_train']
     for split in splits:
         metadata[split] = download_audioset_split(split)
         print(f'{split.upper()} Download Done')
