@@ -15,7 +15,7 @@ from functools import partial
 
 ext = 'm4a'
 sample_rate=16000
-files_per_folder = 5000
+files_per_folder = 50
 num_processes = os.cpu_count()
 cookie_path = '/home/ncl/Downloads/cookies.txt'
 
@@ -124,7 +124,7 @@ def download_audioset_split(split):
     else:
         os.makedirs(os.path.join('wavs', split), exist_ok=True)
         file = open(f'csvs/{split}_segments.csv', 'r').read()
-        rows = file.split('\n')[3:-1]
+        rows = file.split('\n')[3:1003]#for debug
         # logs = parmap.map(download_audio, rows, pm_pbar={'leave':False}, pm_processes=num_processes*2, pm_chunksize=10)
         logs = []
         p = Pool(num_processes*2)
