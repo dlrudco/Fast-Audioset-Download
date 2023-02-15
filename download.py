@@ -56,7 +56,7 @@ def merge_all_json(split):
     p.close()
     p.join()
     return dict(metadata)
-        
+
 def download_audio(video_info, split):
     try:
         file_idx, video_info = video_info
@@ -99,18 +99,20 @@ def download_audio(video_info, split):
         os.makedirs(f'temps/id_{ids}')
         shutil.copy(cookie_path, f'temps/id_{ids}/cookies.txt')
         try:
-            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                file_exist = os.path.isfile(os.path.join(outpath, f'id_{ids}.{ext}'))
-                info=ydl.extract_info(url, download=not file_exist)
-                filename = f'id_{ids}.{ext}'
-                jsonname = f'id_{ids}.json'
-                if not file_exist:
-                    shutil.move(os.path.join(f'temps/id_{ids}','audio.m4a'), os.path.join(outpath, filename))
-                else:
-                    pass
-                file_meta = {'id':f'id_{ids}','path': os.path.join(outpath, filename),'title': info['title'], 'url':url, 'tags': categories, 'labels':[tag2name[c] for c in categories]}
-                json.dump(file_meta, open(os.path.join(outpath, jsonname),'w'))
-                os.system(f'rm -rf temps/id_{ids}')
+            import random
+            dummy = random.random()
+            # with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            #     file_exist = os.path.isfile(os.path.join(outpath, f'id_{ids}.{ext}'))
+            #     info=ydl.extract_info(url, download=not file_exist)
+            #     filename = f'id_{ids}.{ext}'
+            #     jsonname = f'id_{ids}.json'
+            #     if not file_exist:
+            #         shutil.move(os.path.join(f'temps/id_{ids}','audio.m4a'), os.path.join(outpath, filename))
+            #     else:
+            #         pass
+            #     file_meta = {'id':f'id_{ids}','path': os.path.join(outpath, filename),'title': info['title'], 'url':url, 'tags': categories, 'labels':[tag2name[c] for c in categories]}
+            #     json.dump(file_meta, open(os.path.join(outpath, jsonname),'w'))
+            os.system(f'rm -rf temps/id_{ids}')
         except Exception as e:
             os.system(f'rm -rf temps/id_{ids}')
             return f'{url} - ytdl : {log_stream.getvalue()}, system : {str(e)}'
