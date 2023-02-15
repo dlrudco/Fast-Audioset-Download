@@ -104,7 +104,7 @@ def download_audio(video_info, split):
                 filename = f'id_{ids}.{ext}'
                 jsonname = f'id_{ids}.json'
                 if not file_exist:
-                    shutil.move(os.path.join(f'temps/id_{ids}',filename), os.path.join(outpath, filename))
+                    shutil.move(os.path.join(f'temps/id_{ids}','audio.m4a'), os.path.join(outpath, filename))
                 else:
                     pass
                 file_meta = {'id':f'id_{ids}','path': os.path.join(outpath, filename),'title': info['title'], 'url':url, 'tags': categories, 'labels':[tag2name[c] for c in categories]}
