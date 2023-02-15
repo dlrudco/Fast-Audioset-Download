@@ -11,10 +11,13 @@ You can download a cookies.txt by
  5. Download cookie to desired location.
  6. Modify donwload.py specifying the path of your downloaded cookie file
 ## How to Use
+ 1. First download unbalanced_train_segments.csv from http://storage.googleapis.com/us_audioset/youtube_corpus/v1/csv/unbalanced_train_segments.csv
+ 2. Move the downloaded csv file under csvs folder
+
 ```shell
 foo@bar:/path/to/this/repo $ python download.py
 ```
 ** Resume supported(kind of) in case of crash or keyboard interrupt: Only acquire video meta-information(for creating final metadata.json) without downloading actual audio. 
 
 ## Required Packages
-youtube-dl, tqdm
+youtube-dl, tqdm, ffmpeg(*Allows partial youtube download)

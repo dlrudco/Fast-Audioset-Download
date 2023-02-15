@@ -26,8 +26,6 @@ names = list(map(lambda x: '_'.join(x.replace('"','').replace('\n','').replace('
 names = [n.replace('__','_') for n in names]
 tag2name = {t:l for t,l in zip(tags, names)}
 
-split = None
-
 def remove_non_ascii(string):
     return string.encode('ascii', errors='ignore').decode()
 
@@ -56,7 +54,7 @@ def merge_all_json(split):
     p.close()
     p.join()
     return dict(metadata)
-
+        
 def download_audio(video_info, split):
     try:
         file_idx, video_info = video_info
@@ -99,26 +97,23 @@ def download_audio(video_info, split):
         os.makedirs(f'temps/id_{ids}')
         shutil.copy(cookie_path, f'temps/id_{ids}/cookies.txt')
         try:
-            import random
-            dummy = random.random()
-            # with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-            #     file_exist = os.path.isfile(os.path.join(outpath, f'id_{ids}.{ext}'))
-            #     info=ydl.extract_info(url, download=not file_exist)
-            #     filename = f'id_{ids}.{ext}'
-            #     jsonname = f'id_{ids}.json'
-            #     if not file_exist:
-            #         shutil.move(os.path.join(f'temps/id_{ids}','audio.m4a'), os.path.join(outpath, filename))
-            #     else:
-            #         pass
-            #     file_meta = {'id':f'id_{ids}','path': os.path.join(outpath, filename),'title': info['title'], 'url':url, 'tags': categories, 'labels':[tag2name[c] for c in categories]}
-            #     json.dump(file_meta, open(os.path.join(outpath, jsonname),'w'))
+            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+                file_exist = os.path.isfile(os.path.join(outpath, f'id_{ids}.{ext}'))
+                info=ydl.extract_info(url, download=not file_exist)
+                filename = f'id_{ids}.{ext}'
+                jsonname = f'id_{ids}.json'
+                if not file_exist:
+                    shutil.move(os.path.join(f'temps/id_{ids}','audio.m4a'), os.path.join(outpath, filename))
+                else:
+                    pass
+                file_meta = {'id':f'id_{ids}','path': os.path.join(outpath, filename),'title': info['title'], 'url':url, 'tags': categories, 'labels':[tag2name[c] for c in categories]}
+                json.dump(file_meta, open(os.path.join(outpath, jsonname),'w'))
             os.system(f'rm -rf temps/id_{ids}')
         except Exception as e:
             os.system(f'rm -rf temps/id_{ids}')
             return f'{url} - ytdl : {log_stream.getvalue()}, system : {str(e)}'
     return None
 
-# vid_list = pd.read_csv('balanced_train_segments.csv', sep=',', header = 3)
 
 def download_audioset_split(split):
     filename = f'audioset_{split}_metadata.json'
@@ -128,7 +123,6 @@ def download_audioset_split(split):
         os.makedirs(os.path.join('wavs', split), exist_ok=True)
         file = open(f'csvs/{split}_segments.csv', 'r').read()
         rows = file.split('\n')[3:-1]#for debug
-        # logs = parmap.map(download_audio, rows, pm_pbar={'leave':False}, pm_processes=num_processes*2, pm_chunksize=10)
         logs = []
         p = Pool(num_processes*2)
         download_audio_split = partial(download_audio, split=split)
@@ -154,11 +148,10 @@ if __name__ == "__main__":
 
     metadata = {}
 
-    splits = ['unbalanced_train']
+    splits = ['eval', 'balanced_train', 'unbalanced_train']
     for split in splits:
         metadata[split] = download_audioset_split(split)
         print(f'{split.upper()} Download Done')
     
     json.dump(metadata, open('audioset_metadata.json','w'))
-    breakpoint()
 
