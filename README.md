@@ -1,5 +1,5 @@
 # Fast-Audioset-Download
-Download audioset data super fastly with youtube-dl and Python Multiprocessing
+Download audioset data super fastly with youtube-dl and Python Multiprocessing. This repo only downloads audio!!
 
 ## Cookies.txt
 Cookies are required to suppress the auth related warnings(+erros) of youtube-dl([reference](https://github.com/ytdl-org/youtube-dl/issues/31250))
