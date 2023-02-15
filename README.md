@@ -17,6 +17,7 @@ You can download a cookies.txt by
 ## How to Use
  1. First download unbalanced_train_segments.csv from http://storage.googleapis.com/us_audioset/youtube_corpus/v1/csv/unbalanced_train_segments.csv
  2. Move the downloaded csv file under csvs folder
+ 3. Run download.py
 
 ```shell
 foo@bar:/path/to/this/repo $ python download.py
