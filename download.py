@@ -141,7 +141,10 @@ def download_audioset_split(split):
     return metadata
     
 if __name__ == "__main__":
-    shutil.rmtree('temps')
+    try:
+        shutil.rmtree('temps')
+    except FileNotFoundError:
+        pass
     os.makedirs('temps', exist_ok=True)
 
     metadata = {}
