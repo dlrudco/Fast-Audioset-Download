@@ -130,7 +130,7 @@ def download_audioset_split(split):
         p = Pool(num_processes*2)
         download_audio_split = partial(download_audio, split=split)
         with tqdm(total=len(rows),leave=False) as pbar:
-            for log in p.imap_unordered(download_audio_split, enumerate(files)):
+            for log in p.imap_unordered(download_audio_split, enumerate(rows)):
                 logs.append(log)
                 pbar.update()
         p.close()
