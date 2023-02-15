@@ -1,7 +1,7 @@
 import os
 import shutil
 from tqdm import tqdm
-import parmap
+from multiprocessing import Pool
 import youtube_dl
 import logging
 from io import StringIO
@@ -9,121 +9,147 @@ from io import StringIO
 from multiprocessing import Manager
 import time
 import json
+import glob
+
+ext = 'm4a'
+sample_rate=16000
+files_per_folder = 5000
+num_processes = os.cpu_count()
+cookie_path = '/home/ncl/Downloads/cookies.txt'
+
+indices = open('csvs/class_labels_indices.csv').readlines()[1:]
+labels = list(map(lambda x: x.split(',')[0], indices))
+tags = list(map(lambda x: x.split(',')[1], indices))
+names = list(map(lambda x: '_'.join(x.replace('"','').replace('\n','').replace(' ','_').replace('-','_').replace('(','').replace(')','').replace('.','').replace("'",'').split(',')[2:]),indices))
+names = [n.replace('__','_') for n in names]
+tag2name = {t:l for t,l in zip(tags, names)}
 
 split = None
-ext = 'm4a'
+
 def remove_non_ascii(string):
     return string.encode('ascii', errors='ignore').decode()
 
-def download_audio(video_info, metadata):
+def clear_intermediate_json(split):
+    files =  glob.glob(f"{os.path.join(os.path.abspath('.'),'wavs', split)}/**/*.json", recursive=True):
+    p = Pool(num_processes)
+    with tqdm(total=len(files),leave=False) as pbar:
+        for _ in p.imap_unordered(os.remove, files):
+            pbar.update()
+    p.close()
+    p.join()
+             
+def merge_all_json(split):
+    files =  glob.glob(f"{os.path.join(os.path.abspath('.'),'wavs', split)}/**/*.json", recursive=True):
+    manager = Manger()
+    def assign(file, meta):
+        info = json.load(open(file))
+        meta[info['id']] = info
+    metadata = manager.dict()
+    assign_meta = partial(assign, meta=metadata)
+    p = Pool(num_processes)
+    with tqdm(total=len(files),leave=False) as pbar:
+        for _ in p.imap_unordered(assign_meta, files):
+            pbar.update()
+    p.close()
+    p.join()
+    return dict(metadata)
+        
+def download_audio(video_info, split):
     try:
+        file_idx, video_info = video_info
+        subfolder_idx = f'{file_idx // 5000:06}'
         video_info = video_info.replace(' ', '').split(',')
         to = float((video_info[2]))
         start = float(video_info[1])
     except IndexError:
         print(video_info)
+        
     st = f'{int(start//3600)}:{int(start//60)-60*int(start//3600)}:{start%60}'
     dur = f'{int(to//3600)}:{int(to//60)-60*int(to//3600)}:{to%60}'
     ids = video_info[0]
     categories = [c.replace('"','') for c in video_info[3:]]
-
-    ytdl_logger = logging.getLogger()
-    log_stream = StringIO()    
-    logging.basicConfig(stream=log_stream, level=logging.INFO)
-    
-    ydl_opts = {
-        "logger": ytdl_logger,
-        'cookiefile' : f'temps/id_{ids}.txt',
-        'ignoreerrors': True,
-        'outtmpl':"temps/id_%(id)s.%(ext)s",
-        'quiet' : True,
-        'format': 'bestaudio/best',
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': ext
-        }],
-        'postprocessor_args': ['-ar', '16000'],
-        'external_downloader':'ffmpeg',
-        'external_downloader_args':['-ss',st, '-to',dur, '-loglevel', 'quiet']
-    }
-    url = f'https://www.youtube.com/watch?v={ids}'
-    count = 0
-    while count < 5:
-        shutil.copy('/home/ncl/Downloads/cookies.txt', f'temps/id_{ids}.txt')
+    outpath = os.path.join('wavs',split,subfolder_idx)
+    os.makedirs(outpath, exist_ok=True)
+    if os.path.isfile(os.path.join(outpath, f'id_{ids}.json')):
+        pass
+    else:
+        ytdl_logger = logging.getLogger()
+        log_stream = StringIO()    
+        logging.basicConfig(stream=log_stream, level=logging.INFO)
+        
+        ydl_opts = {
+            "logger": ytdl_logger,
+            'cookiefile' : f'temps/id_{ids}/cookies.txt',
+            'ignoreerrors': True,
+            'outtmpl':"temps/id_%(id)s/audio.%(ext)s",
+            'quiet' : True,
+            'format': 'bestaudio/best',
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': ext
+            }],
+            'postprocessor_args': ['-ar', str(sample_rate)],
+            'external_downloader':'ffmpeg',
+            'external_downloader_args':['-ss',st, '-to',dur, '-loglevel', 'quiet']
+        }
+        url = f'https://www.youtube.com/watch?v={ids}'
+        
+        shutil.copy(cookie_path, f'temps/id_{ids}/cookies.txt')
         try:
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                file_exist = os.path.isfile(os.path.join('wavs', split, f'id_{ids}.{ext}'))
+                file_exist = os.path.isfile(os.path.join(outpath, f'id_{ids}.{ext}'))
                 info=ydl.extract_info(url, download=not file_exist)
-                filename = f'id_{info["id"]}.{ext}'   
+                filename = f'id_{ids}.{ext}'
+                jsonname = f'id_{ids}.json'
                 if not file_exist:
-                    shutil.move(os.path.join('temps',filename), os.path.join('wavs', split, filename))
+                    shutil.move(os.path.join(f'temps/id_{ids}',filename), os.path.join(outpath, filename))
                 else:
                     pass
-                metadata[filename] = {'title': info['title'], 'url':url, 'tags': categories, 'labels': [tag2name[c] for c in categories]}
-                os.remove(f'temps/id_{ids}.txt')
-            return None
-        except FileNotFoundError:
-            count += 1
-            time.sleep(1)
-            if count == 5:
-                print('Hello')
-                os.remove(f'temps/id_{ids}.txt')
-                return f'{url} - ytdl : {log_stream.getvalue()}, system : Retry failed. Try manual download.'
+                file_meta = {'id':f'id_{ids}','path': os.path.join(outpath, filename),'title': info['title'], 'url':url, 'tags': categories, 'labels':[tag2name[c] for c in categories]}
+                json.dump(file_meta, open(os.path.join(outpath, jsonname),'w'))
+                shutil.rmtree(f'temps/id_{ids}')
         except Exception as e:
-            os.remove(f'temps/id_{ids}.txt')
+            shutil.rmtree(f'temps/id_{ids}')
             return f'{url} - ytdl : {log_stream.getvalue()}, system : {str(e)}'
-    
+    return None
 
 # vid_list = pd.read_csv('balanced_train_segments.csv', sep=',', header = 3)
-if __name__ == "__main__":
-    os.system('rm -rf temps')
-    os.makedirs('temps', exist_ok=True)
-    indices = open('csvs/class_labels_indices.csv').readlines()[1:]
-    labels = list(map(lambda x: x.split(',')[0], indices))
-    tags = list(map(lambda x: x.split(',')[1], indices))
-    names = list(map(lambda x: '_'.join(x.replace('"','').replace('\n','').replace(' ','_').replace('-','_').replace('(','').replace(')','').replace('.','').replace("'",'').split(',')[2:]),indices))
-    names = [n.replace('__','_') for n in names]
-    tag2name = {t:l for t,l in zip(tags, names)}
 
-    manager = Manager()
+def download_audioset_split(split):
+    filename = f'audioset_{split}_metadata.json'
+    if os.path.isfile(filename):
+        metadata = json.load(open(filename))
+    else:
+        os.makedirs(os.path.join('wavs', split), exist_ok=True)
+        file = open(f'csvs/{split}_segments.csv', 'r').read()
+        rows = file.split('\n')[3:-1]
+        # logs = parmap.map(download_audio, rows, pm_pbar={'leave':False}, pm_processes=num_processes*2, pm_chunksize=10)
+        logs = []
+        p = Pool(num_processes*2)
+        download_audio_split = partial(download_audio, split=split)
+        with tqdm(total=len(rows),leave=False) as pbar:
+            for log in p.imap_unordered(download_audio_split, enumerate(files)):
+                logs.append(log)
+                pbar.update()
+        p.close()
+        p.join()
+        logs = [l for l in logs if l is not None]
+        open(f'download_{split}_logs.txt','w').write('\n'.join(logs))
+        metadata = merge_all_json(split)
+        json.dump(metadata, open(filename,'w'))
+        clear_intermediate_json(split)
+    return metadata
+    
+if __name__ == "__main__":
+    shutil.rmtree('temps')
+    os.makedirs('temps', exist_ok=True)
+
     metadata = {}
 
-    split = 'eval'
-    os.makedirs(os.path.join('wavs', split), exist_ok=True)
-    file = open('csvs/eval_segments.csv', 'r').read()
-    rows = file.split('\n')[3:-1]
-    eval_metadata = manager.dict()
-    logs = parmap.map(download_audio, rows, eval_metadata, pm_pbar=True, pm_processes=64, pm_chunksize=2)
-    logs = [l for l in logs if l is not None]
-    open('download_eval_logs.txt','w').write('\n'.join(logs))
-    metadata['eval'] = dict(eval_metadata)
-    json.dump(metadata['eval'], open('audioset_eval_metadata.json','w'))
-    print('Eval Download Done')
-
-    split = 'balanced'
-    os.makedirs(os.path.join('wavs', split), exist_ok=True)
-    file = open('csvs/balanced_train_segments.csv', 'r').read()
-    rows = file.split('\n')[3:-1]
-    balance_metadata = manager.dict()
-    logs = parmap.map(download_audio, rows, balance_metadata, pm_pbar=True, pm_processes=64, pm_chunksize=2)
-    logs = [l for l in logs if l is not None]
-    open('download_train-bal_logs.txt','w').write('\n'.join(logs))
-    metadata['balanced_train'] = dict(balance_metadata)
-    json.dump(metadata['balanced_train'], open('audioset_balanced_metadata.json','w'))
-    print('Train-Balanced Download Done')
-
-    split = 'unbalanced'
-    os.makedirs(os.path.join('wavs', split), exist_ok=True)
-    file = open('csvs/unbalanced_train_segments.csv', 'r').read()
-    rows = file.split('\n')[3:-1]
-    unbalance_metadata = manager.dict()
-    logs = parmap.map(download_audio, rows, unbalance_metadata, pm_pbar=True, pm_processes=64, pm_chunksize=2)
-    logs = [l for l in logs if l is not None]
-    open('download_train-unbal_logs.txt','w').write('\n'.join(logs))
-    metadata['unbalanced_train'] = dict(unbalance_metadata)
-    json.dump(metadata['unbalanced_train'], open('audioset_balanced_metadata.json','w'))
-    print('Train-Unbalanced Download Done')
-
+    splits = ['eval', 'balanced_train', 'unbalanced_train']
+    for split in splits:
+        metadata[split] = download_audioset_split(split)
+        print(f'{split.upper()} Download Done')
     
     json.dump(metadata, open('audioset_metadata.json','w'))
     breakpoint()
