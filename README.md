@@ -1,11 +1,18 @@
 # Fast-Audioset-Download
-Download audioset data super fastly with youtube-dl and Python Multiprocessing. This repo only downloads audio(dataset size issue)!! If you want to download as a video, Follow instructions [below](#down-as-video).
+Download audioset data super fastly with youtube-dl and Python Multiprocessing. Major difference with other repos is that my repo utilizes ffmpeg which supports "Partial" youtube download when provided to youtube-dl as an external downloader, while others rely on default downloader that downloads full video and then clip it.
+
+Audioset(Weak) is basically a multi-labelled dataset. Weirdly enough, many repositories tend to store them in a class-folder fashion which is more suitable for single-labelled dataset. Thus, I chose to take a different approach where this repo stores all of the downloaded data in a single folder and create metadata json file containing information. Note that the csv files provided by google already contain metadata, but one has to match that information to the downloaded files every time.
+
+This repo only downloads audio(dataset size issue)!! If you want to download as a video, Follow instructions [below](#down-as-video).
 
 After the download, files will be stored under the 'wavs' folder. 
 
 One can acquire each file's information(including url, stored path(relative), tags, labels interpreted from tags ...) by parsing the metadata json file. 
 
 It would be very nice of you to put a star★ if you liked my code :)
+
+## Required Packages
+youtube-dl, tqdm, ffmpeg(*Allows partial youtube download)
 
 ## Cookies.txt
 Cookies are required to suppress the auth related warnings(+erros) of youtube-dl([reference](https://github.com/ytdl-org/youtube-dl/issues/31250))
@@ -25,9 +32,6 @@ You can download a cookies.txt by
 foo@bar:/path/to/this/repo $ python download.py
 ```
 ** Resume supported(kind of) in case of crash or keyboard interrupt: Only acquire video meta-information(for creating final metadata.json) without downloading actual audio. 
-
-## Required Packages
-youtube-dl, tqdm, ffmpeg(*Allows partial youtube download)
 
 ## Downloading in a video(mp4) format<a name="down-as-video"></a>
 youtube-dl and ffmpeg also support video downloading. Naturally, my repo can do that with a simple change in the code.
