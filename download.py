@@ -1,7 +1,7 @@
 import os
 import shutil
 from tqdm import tqdm
-from multiprocessing import Pool
+from multiprocessing import Pool, get_context
 import youtube_dl
 import logging
 from io import StringIO
@@ -13,7 +13,7 @@ import glob
 
 from functools import partial
 
-ext = 'm4a'
+ext = 'mp3'
 sample_rate=16000
 files_per_folder = 5000
 num_processes = os.cpu_count()
@@ -31,7 +31,7 @@ def remove_non_ascii(string):
 
 def clear_intermediate_json(split):
     files =  glob.glob(f"{os.path.join(os.path.abspath('.'),'wavs', split)}/**/*.json", recursive=True)
-    p = Pool(num_processes)
+    p = get_context("spawn").Pool(num_processes)
     with tqdm(total=len(files),leave=False) as pbar:
         for _ in p.imap_unordered(os.remove, files):
             pbar.update()
@@ -47,7 +47,7 @@ def merge_all_json(split):
     manager = Manager()
     metadata = manager.dict()
     assign_meta = partial(assign, meta=metadata)
-    p = Pool(num_processes)
+    p = get_context("spawn").Pool(num_processes)
     with tqdm(total=len(files),leave=False) as pbar:
         for _ in p.imap_unordered(assign_meta, files):
             pbar.update()
@@ -124,7 +124,7 @@ def download_audioset_split(split):
         file = open(f'csvs/{split}_segments.csv', 'r').read()
         rows = file.split('\n')[3:-1]#for debug
         logs = []
-        p = Pool(num_processes*2)
+        p = get_context("spawn").Pool(num_processes*2)
         download_audio_split = partial(download_audio, split=split)
         with tqdm(total=len(rows),leave=False) as pbar:
             for log in p.imap_unordered(download_audio_split, enumerate(rows)):
