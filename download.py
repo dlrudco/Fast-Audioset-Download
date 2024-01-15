@@ -2,7 +2,7 @@ import os
 import shutil
 from tqdm import tqdm
 from multiprocessing import Pool, get_context
-import youtube_dl
+import yt_dlp
 import logging
 from io import StringIO
 # import pandas as pd
@@ -97,7 +97,7 @@ def download_audio(video_info, split):
         os.makedirs(f'temps/id_{ids}')
         shutil.copy(cookie_path, f'temps/id_{ids}/cookies.txt')
         try:
-            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 file_exist = os.path.isfile(os.path.join(outpath, f'id_{ids}.{ext}'))
                 info=ydl.extract_info(url, download=not file_exist)
                 filename = f'id_{ids}.{ext}'
