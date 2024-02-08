@@ -13,7 +13,7 @@ import glob
 
 from functools import partial
 
-ext = 'mp3'
+ext = 'm4a'
 sample_rate=16000
 files_per_folder = 5000
 num_processes = os.cpu_count()
