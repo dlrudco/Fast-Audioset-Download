@@ -1,7 +1,7 @@
 # Fast-Audioset-Download
 Download audioset data super fastly with youtube-dl and Python Multiprocessing. Major difference with other repos is that my repo utilizes ffmpeg which supports "Partial" youtube download when provided to youtube-dl as an external downloader, while others rely on default downloader that downloads full video and then clip it.
 
-Audioset(Weak) is basically a multi-labelled dataset. Weirdly enough, many repositories tend to store them in a class-folder fashion which is more suitable for single-labelled dataset. Thus, I chose to take a different approach where this repo stores all of the downloaded data in a single folder and create metadata json file containing information. Note that the csv files provided by google already contain metadata, but one has to match that information to the downloaded files every time.
+Audioset(Weak) is basically a multi-labelled dataset. Weirdly enough, many repositories tend to store them in a class-folder fashion which is more suitable for single-labelled dataset. Thus, I chose to take a different approach where **this repo stores all of the downloaded data in a single folder and create metadata json file(audioset_metadata.json) containing all the label information**. Note that the csv files provided by google already contain metadata, but one has to match that information to the downloaded files every time.
 
 This repo only downloads audio(dataset size issue)!! If you want to download as a video, Follow instructions [below](#down-as-video).
 
